@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 
-enum UserRole { vendor, customer, admin }
+enum UserRole { vendor, customer }
 
 class RoleSelector extends StatelessWidget {
   final UserRole value;
@@ -10,8 +10,8 @@ class RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = const [UserRole.vendor, UserRole.customer, UserRole.admin];
-    final labels = const ['Vendor', 'Customer', 'Admin'];
+    final items = const [UserRole.vendor, UserRole.customer];
+    final labels = const ['Vendor', 'Customer'];
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(items.length, (i) {

@@ -2,17 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:relax_doc/config.dart';
 import 'package:relax_doc/models/product.dart';
+import 'package:relax_doc/data/demo_products.dart';
 
 class ProductService {
   static const String _path = "/product-service/products/getAllProducts";
 
   static Future<List<Product>> getAllProducts() async {
-    final uri = Uri.parse("$serverBase$_path");
-    final res = await http.post(uri, headers: {"Content-Type": "application/json"}, body: jsonEncode({}));
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return Product.listFromResponse(res.body);
-    }
-    throw Exception('Failed to fetch products: ${res.statusCode}');
+    await Future.delayed(const Duration(milliseconds: 400));
+    return DemoProducts.all();
   }
 
   static Future<Map<String, dynamic>> createProduct(Map<String, dynamic> payload) async {

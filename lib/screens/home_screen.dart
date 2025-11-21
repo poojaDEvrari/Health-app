@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/screens/category_products_screen.dart';
+import 'package:relax_doc/services/product_service.dart';
+import 'package:relax_doc/models/product.dart';
+import 'package:relax_doc/services/auth_guard.dart';
+import 'package:relax_doc/screens/product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -71,12 +75,20 @@ class _ServicePill extends StatelessWidget {
 }
 
 class _SmallProductCard extends StatelessWidget {
-  final int index;
-  const _SmallProductCard({required this.index});
+  final Product product;
+  const _SmallProductCard({required this.product});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: () async {
+        final ok = await AuthGuard.ensureLoggedIn(context);
+        if (!ok) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+        );
+      },
+      child: Container(
       width: 150,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -99,15 +111,21 @@ class _SmallProductCard extends StatelessWidget {
                 color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(10),
               ),
+              clipBehavior: Clip.antiAlias,
+              child: product.imagesUrl.isNotEmpty
+                  ? Image.network(product.imagesUrl.first, fit: BoxFit.cover)
+                  : const Icon(Icons.image_not_supported_outlined),
             ),
           ),
           const SizedBox(height: 8),
-          Text('Product ${index + 1}', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text('Save 20%', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.primary)),
+          if (product.discount != null)
+            Text('Save ${product.discount}%'
+                , style: GoogleFonts.poppins(fontSize: 12, color: AppColors.primary)),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -332,15 +350,30 @@ class _HomeScreenState extends State<HomeScreen> {
                     title: 'Best Selling Product',
                     subtitle: 'Now at Special Discount',
                     height: 318,
-                    child: SizedBox(
-                      height: 210,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        itemBuilder: (context, i) => _SmallProductCard(index: i),
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemCount: 6,
-                      ),
+                    child: FutureBuilder<List<Product>>(
+                      future: ProductService.getAllProducts(),
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                        }
+                        if (snap.hasError) {
+                          return Center(child: Text('Failed to load products'));
+                        }
+                        final products = snap.data ?? [];
+                        if (products.isEmpty) {
+                          return const Center(child: Text('No products'));
+                        }
+                        return SizedBox(
+                          height: 210,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            itemBuilder: (context, i) => _SmallProductCard(product: products[i % products.length]),
+                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                            itemCount: products.length.clamp(0, 10),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

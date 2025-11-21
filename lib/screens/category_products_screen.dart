@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/models/product.dart';
 import 'package:relax_doc/services/product_service.dart';
 import 'package:relax_doc/theme/app_theme.dart';
+import 'package:relax_doc/services/auth_guard.dart';
+import 'package:relax_doc/screens/product_detail_screen.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
   final String categoryTitle;
@@ -143,7 +145,15 @@ class _ProductRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: () async {
+        final ok = await AuthGuard.ensureLoggedIn(context);
+        if (!ok) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => ProductDetailScreen(product: product)),
+        );
+      },
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -201,7 +211,13 @@ class _ProductRow extends StatelessWidget {
                 Row(
                   children: [
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        final ok = await AuthGuard.ensureLoggedIn(context);
+                        if (!ok) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Added to cart (to be implemented)')),
+                        );
+                      },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.primary),
                         foregroundColor: AppColors.primary,
@@ -211,7 +227,13 @@ class _ProductRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        final ok = await AuthGuard.ensureLoggedIn(context);
+                        if (!ok) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Proceed to buy (to be implemented)')),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -225,6 +247,6 @@ class _ProductRow extends StatelessWidget {
           )
         ],
       ),
-    );
+    ));
   }
 }

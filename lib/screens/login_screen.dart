@@ -6,6 +6,7 @@ import 'package:relax_doc/widgets/role_selector.dart';
 import 'package:relax_doc/screens/personal_information_screen.dart';
 import 'package:relax_doc/screens/business_information_screen.dart';
 import 'package:relax_doc/screens/sign_up_screen.dart';
+import 'package:relax_doc/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   UserRole role = UserRole.customer;
   bool hidePassword = true;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -116,23 +118,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 6),
                         ElevatedButton(
-                          onPressed: () {
-                            // Simple front-end routing based on selected role
-                            if (role == UserRole.vendor) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const BusinessInformationScreen(),
-                                ),
-                              );
-                            } else {
-                              // Customer and Admin go to Personal Information for now
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const PersonalInformationScreen(),
-                                ),
-                              );
-                            }
-                          },
+                          onPressed: isLoading
+                              ? null
+                              : () async {
+                                  final email = emailController.text.trim();
+                                  final password = passwordController.text;
+                                  if (email.isEmpty || password.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please enter email and password')),
+                                    );
+                                    return;
+                                  }
+
+                                  final roleStr = (role == UserRole.vendor) ? 'VENDOR' : 'CUSTOMER';
+
+                                  setState(() => isLoading = true);
+                                  try {
+                                    await AuthService.login(
+                                      email: email,
+                                      password: password,
+                                      role: roleStr,
+                                    );
+                                    if (mounted) Navigator.of(context).pop(true);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Login failed: $e')),
+                                    );
+                                  } finally {
+                                    if (mounted) setState(() => isLoading = false);
+                                  }
+                                },
                           child: const Text(
                             'Login',
                             style: TextStyle(
