@@ -170,7 +170,14 @@ class _ProductRow extends StatelessWidget {
               height: 92,
               color: Colors.grey.shade200,
               child: product.imagesUrl.isNotEmpty
-                  ? Image.network(product.imagesUrl.first, fit: BoxFit.cover)
+                  ? Image.network(
+                      product.imagesUrl.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                      ),
+                    )
                   : const Icon(Icons.image_not_supported_outlined),
             ),
           ),

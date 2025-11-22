@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/services/product_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddNewProductScreen extends StatefulWidget {
   const AddNewProductScreen({super.key});
@@ -31,6 +33,8 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   final _vendorName = TextEditingController();
 
   bool _submitting = false;
+  final _picker = ImagePicker();
+  final List<String> _uploadedImages = [];
 
   @override
   void dispose() {
@@ -128,10 +132,41 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image URLs (comma separated)
+                  // Image URLs + S3 upload helper
                   Text('Upload Product Image', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.black87)),
                   const SizedBox(height: 6),
-                  TextFormField(controller: _images, decoration: _input('Comma separated image URLs'), validator: (v) => (v==null||v.isEmpty)?'Enter at least one image URL':null),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+                          if (picked == null) return;
+                          final url = await ProductService.uploadToS3(File(picked.path));
+                          _uploadedImages.add(url);
+                          _images.text = _uploadedImages.join(',');
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.cloud_upload_outlined),
+                        label: const Text('Pick & Upload'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _images,
+                          decoration: _input('Comma separated image URLs'),
+                          validator: (v) => (v==null||v.isEmpty)?'Enter at least one image URL':null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_uploadedImages.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _uploadedImages.map((u) => Chip(label: Text('img'), avatar: const Icon(Icons.image)) ).toList(),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text('Equipment Name', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.black87)),
                   const SizedBox(height: 6),
@@ -185,9 +220,27 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
                     ),
                   ]),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _videoUrl, decoration: _input('Video URL')),
+                  // Video URL + S3 upload helper
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final picked = await _picker.pickVideo(source: ImageSource.gallery);
+                          if (picked == null) return;
+                          final url = await ProductService.uploadToS3(File(picked.path));
+                          _videoUrl.text = url;
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.cloud_upload_outlined),
+                        label: const Text('Upload Video'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: TextFormField(controller: _videoUrl, decoration: _input('Video URL'))),
+                    ],
+                  ),
                   const SizedBox(height: 12),
-                  TextFormField(controller: _docUrl, decoration: _input('Product document URL')),
+                  // Document URL (enter URL for now or attach via future file picker)
+                  TextFormField(controller: _docUrl, decoration: _input('Product document URL (PDF)')),
                   const SizedBox(height: 12),
                   TextFormField(controller: _vendorName, decoration: _input('Sold by vendor name')),
                   const SizedBox(height: 20),

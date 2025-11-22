@@ -40,9 +40,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Product Details', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: BackButton(
+          onPressed: () async {
+            final nav = Navigator.of(context);
+            if (nav.canPop()) {
+              nav.pop();
+            } else {
+              await nav.maybePop();
+            }
+          },
         ),
         actions: const [
           Icon(Icons.share_outlined),
@@ -93,7 +99,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         controller: _pageController,
                         onPageChanged: (i) => setState(() => _page = i),
                         itemCount: images.length,
-                        itemBuilder: (_, i) => Image.network(images[i], fit: BoxFit.cover, width: double.infinity),
+                        itemBuilder: (_, i) => Image.network(
+                          images[i],
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey.shade200,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.image_not_supported_outlined, color: Colors.grey),
+                          ),
+                        ),
                       ),
                       Positioned(
                         bottom: 8,

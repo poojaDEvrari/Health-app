@@ -5,6 +5,7 @@ import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/widgets/role_selector.dart';
 import 'package:relax_doc/screens/personal_information_screen.dart';
 import 'package:relax_doc/screens/business_information_screen.dart';
+import 'package:relax_doc/screens/vendor_dashboard_screen.dart';
 import 'package:relax_doc/screens/sign_up_screen.dart';
 import 'package:relax_doc/services/auth_service.dart';
 
@@ -134,12 +135,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   setState(() => isLoading = true);
                                   try {
-                                    await AuthService.login(
+                                    final res = await AuthService.login(
                                       email: email,
                                       password: password,
                                       role: roleStr,
                                     );
-                                    if (mounted) Navigator.of(context).pop(true);
+                                    if (!mounted) return;
+                                    if (role == UserRole.vendor) {
+                                      final isNew = AuthService.inferVendorIsNew(res);
+                                      if (isNew) {
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(builder: (_) => const BusinessInformationScreen()),
+                                          (route) => false,
+                                        );
+                                      } else {
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder: (_) => VendorDashboardScreen(
+                                              dashboard: const <String, dynamic>{},
+                                              stats: const <String, dynamic>{},
+                                            ),
+                                          ),
+                                          (route) => false,
+                                        );
+                                      }
+                                    } else {
+                                      Navigator.of(context).pop(true);
+                                    }
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(content: Text('Login failed: $e')),

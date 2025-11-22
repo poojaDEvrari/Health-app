@@ -13,4 +13,13 @@ class AuthGuard {
     final after = await TokenStore.getToken();
     return (result == true) || (after != null && after.isNotEmpty);
   }
+
+  static Future<void> logout(BuildContext context) async {
+    await TokenStore.clearToken();
+    if (!context.mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/theme/app_theme.dart';
+import 'package:relax_doc/services/auth_guard.dart';
 import 'package:relax_doc/screens/add_new_product_screen.dart';
 import 'package:relax_doc/screens/my_products_screen.dart';
 
@@ -37,6 +38,13 @@ class VendorDashboardScreen extends StatelessWidget {
         title: Text('Seller Dashboard', style: GoogleFonts.poppins(color: AppColors.primary, fontWeight: FontWeight.w700)),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.black,
+        actions: [
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout),
+            onPressed: () => AuthGuard.logout(context),
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
