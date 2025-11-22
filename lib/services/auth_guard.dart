@@ -16,6 +16,7 @@ class AuthGuard {
 
   static Future<void> logout(BuildContext context) async {
     await TokenStore.clearToken();
+    await TokenStore.clearRole();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),

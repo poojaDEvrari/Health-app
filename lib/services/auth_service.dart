@@ -28,6 +28,9 @@ class AuthService {
     token ??= _extractToken(data);
     if (token != null && token.isNotEmpty) {
       await TokenStore.saveToken(token);
+      if (role != null && role.isNotEmpty) {
+        await TokenStore.saveRole(role);
+      }
     }
     return data;
   }
@@ -61,6 +64,7 @@ class AuthService {
     token ??= _extractToken(data);
     if (token != null && token.isNotEmpty) {
       await TokenStore.saveToken(token);
+      await TokenStore.saveRole(role);
     }
     return data;
   }

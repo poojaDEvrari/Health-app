@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/screens/login_screen.dart';
 import 'package:relax_doc/screens/home_screen.dart';
 import 'package:relax_doc/theme/app_theme.dart';
+import 'package:relax_doc/services/token_store.dart';
+import 'package:relax_doc/screens/vendor_dashboard_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,12 +19,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 4), () {
-      if (!mounted) return;
+    _routeNext();
+  }
+
+  Future<void> _routeNext() async {
+    // Optional splash delay
+    await Future.delayed(const Duration(seconds: 2));
+    final token = await TokenStore.getToken();
+    if (!mounted) return;
+    if (token != null && token.isNotEmpty) {
+      final role = await TokenStore.getRole();
+      if (role != null && role.toUpperCase() == 'VENDOR') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const VendorDashboardScreen(
+              dashboard: <String, dynamic>{},
+              stats: <String, dynamic>{},
+            ),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
+    } else {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
-    });
+    }
   }
 
   @override
