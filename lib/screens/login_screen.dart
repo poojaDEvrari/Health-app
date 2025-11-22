@@ -8,6 +8,7 @@ import 'package:relax_doc/screens/business_information_screen.dart';
 import 'package:relax_doc/screens/vendor_dashboard_screen.dart';
 import 'package:relax_doc/screens/sign_up_screen.dart';
 import 'package:relax_doc/services/auth_service.dart';
+import 'package:relax_doc/services/token_store.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -141,7 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       role: roleStr,
                                     );
                                     if (!mounted) return;
-                                    if (role == UserRole.vendor) {
+                                    final savedRole = (await TokenStore.getRole())?.toUpperCase();
+                                    if (savedRole == 'VENDOR') {
                                       final isNew = AuthService.inferVendorIsNew(res);
                                       if (isNew) {
                                         Navigator.of(context).pushAndRemoveUntil(

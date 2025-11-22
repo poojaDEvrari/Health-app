@@ -28,8 +28,10 @@ class AuthService {
     token ??= _extractToken(data);
     if (token != null && token.isNotEmpty) {
       await TokenStore.saveToken(token);
-      if (role != null && role.isNotEmpty) {
-        await TokenStore.saveRole(role);
+      // Prefer role from API response over selector
+      final detectedRole = _extractRole(data) ?? role;
+      if (detectedRole != null && detectedRole.isNotEmpty) {
+        await TokenStore.saveRole(detectedRole);
       }
     }
     return data;
@@ -48,11 +50,20 @@ class AuthService {
       uri,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
+        // Provide multiple common key casings to maximize backend compatibility
         "firstname": firstname,
+        "firstName": firstname,
         "lastname": lastname,
+        "lastName": lastname,
         "email": email,
+        // Some backends expect username; mirror email when absent
+        "username": email,
         "password": password,
+        // Role in all caps as requested
         "role": role,
+        // Sometimes backends accept userRole or accountType
+        "userRole": role,
+        "accountType": role,
         "address": address,
       }),
     );
@@ -64,7 +75,10 @@ class AuthService {
     token ??= _extractToken(data);
     if (token != null && token.isNotEmpty) {
       await TokenStore.saveToken(token);
-      await TokenStore.saveRole(role);
+      final detectedRole = _extractRole(data) ?? role;
+      if (detectedRole.isNotEmpty) {
+        await TokenStore.saveRole(detectedRole);
+      }
     }
     return data;
   }
@@ -148,5 +162,28 @@ class AuthService {
 
     // Default to existing vendor if unknown
     return false;
+  }
+
+  // Try to pull a role string such as 'VENDOR' or 'CUSTOMER' from common response shapes
+  static String? _extractRole(Map<String, dynamic> data) {
+    String? normalize(dynamic v) => v is String ? v.trim() : null;
+    final direct = normalize(data['role']);
+    if (direct != null && direct.isNotEmpty) return direct;
+    final user = data['user'];
+    if (user is Map<String, dynamic>) {
+      final r = normalize(user['role']);
+      if (r != null && r.isNotEmpty) return r;
+    }
+    final inner = data['data'];
+    if (inner is Map<String, dynamic>) {
+      final r = normalize(inner['role']);
+      if (r != null && r.isNotEmpty) return r;
+      final profile = inner['profile'];
+      if (profile is Map<String, dynamic>) {
+        final rp = normalize(profile['role']);
+        if (rp != null && rp.isNotEmpty) return rp;
+      }
+    }
+    return null;
   }
 }

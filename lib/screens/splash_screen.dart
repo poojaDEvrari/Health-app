@@ -38,16 +38,13 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
         );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+        return;
       }
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
     }
+    // Default for all unauthenticated (or non-vendor) flows: show Home first
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   @override
