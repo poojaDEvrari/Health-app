@@ -24,6 +24,9 @@ class Product {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+
+  final String? deliveryTime;
+
   Product({
     required this.id,
     required this.title,
@@ -47,6 +50,9 @@ class Product {
     this.quantityAvailable,
     this.createdAt,
     this.updatedAt,
+
+    /// ⭐ NEW FIELD
+    this.deliveryTime,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -56,7 +62,9 @@ class Product {
       description: json['description'] ?? '',
       keyFeatures: (json['key_features'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       reviews: json['reviews']?.toString(),
-      rating: (json['rating'] is int) ? (json['rating'] as int).toDouble() : (json['rating'] as num?)?.toDouble(),
+      rating: (json['rating'] is int)
+          ? (json['rating'] as int).toDouble()
+          : (json['rating'] as num?)?.toDouble(),
       discountedPrice: json['discounted_price'] ?? 0,
       originalPrice: json['original_price'],
       discount: json['discount'],
@@ -73,6 +81,9 @@ class Product {
       quantityAvailable: json['quantity_available'] as int?,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+
+      /// ⭐ NEW FIELD
+      deliveryTime: json['delivery_time']?.toString(),
     );
   }
 
