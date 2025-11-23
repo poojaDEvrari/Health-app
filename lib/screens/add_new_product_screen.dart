@@ -17,6 +17,7 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
 
   final _title = TextEditingController();
   final _description = TextEditingController();
+  final _keyFeatures = TextEditingController();
   final _price = TextEditingController();
   final _stock = TextEditingController();
   final _reviews = TextEditingController();
@@ -40,6 +41,7 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
   void dispose() {
     _title.dispose();
     _description.dispose();
+    _keyFeatures.dispose();
     _price.dispose();
     _stock.dispose();
     _reviews.dispose();
@@ -64,10 +66,15 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList();
+      final features = _keyFeatures.text
+          .split('\n')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
       final payload = {
         "title": _title.text,
         "description": _description.text,
-        "key_features": [],
+        "key_features": features,
         "reviews": _reviews.text,
         "rating": double.tryParse(_rating.text) ?? 0,
         "discounted_price": int.tryParse(_discountedPrice.text) ?? int.tryParse(_price.text) ?? 0,
@@ -179,6 +186,15 @@ class _AddNewProductScreenState extends State<AddNewProductScreen> {
                       minLines: 3,
                       maxLines: 5,
                       validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Key Features (one per line)', style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.black87)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _keyFeatures,
+                      minLines: 3,
+                      maxLines: 6,
+                      decoration: _input('e.g. Electric height adjustable\nBackrest + Knee rest\nAll side safety railing'),
                     ),
                     const SizedBox(height: 16),
                     Row(

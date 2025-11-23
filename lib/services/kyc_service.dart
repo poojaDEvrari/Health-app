@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:relax_doc/config.dart';
+import 'package:relax_doc/services/token_store.dart';
 
 class KycService {
   // Uses multipart if any file is provided. Otherwise sends JSON.
@@ -11,13 +12,18 @@ class KycService {
     File? gstCertificate,
     File? medicalCertificate,
   }) async {
-    final uri = Uri.parse("$serverBase/vendor-kyc");
+    // Backend expects: POST {server}/auth-service/auth/vendor-kyc
+    final uri = Uri.parse("$serverBase/auth-service/auth/vendor-kyc");
+    final token = await TokenStore.getToken();
 
     final hasFiles = adharCard != null || panCard != null || gstCertificate != null || medicalCertificate != null;
     if (!hasFiles) {
       final res = await http.post(
         uri,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+        },
         body: jsonEncode(payload),
       );
       if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -27,6 +33,9 @@ class KycService {
     }
 
     final request = http.MultipartRequest('POST', uri);
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
     // Add fields (stringify nulls as empty or skip)
     payload.forEach((key, value) {
       if (value != null) {

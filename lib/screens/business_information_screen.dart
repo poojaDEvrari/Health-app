@@ -331,6 +331,23 @@ class _BusinessInformationScreenState extends State<BusinessInformationScreen> {
                                     if (_submitting) return;
                                     try {
                                       setState(() => _submitting = true);
+                                      // Validate and normalize fields required by backend
+                                      final phoneDigits = _phone.text.replaceAll(RegExp(r'\D'), '');
+                                      if (phoneDigits.length != 10) {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone must be exactly 10 digits')));
+                                        setState(() => _submitting = false);
+                                        return;
+                                      }
+                                      final ifscNorm = _ifsc.text.trim().toUpperCase();
+                                      final ifscOk = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(ifscNorm);
+                                      if (!ifscOk) {
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid IFSC format')));
+                                        setState(() => _submitting = false);
+                                        return;
+                                      }
+                                      _phone.text = phoneDigits;
+                                      _ifsc.text = ifscNorm;
+
                                       final payload = _buildKycPayload();
                                       await KycService.submitVendorKyc(
                                         payload,
@@ -529,20 +546,38 @@ class _BusinessInformationScreenState extends State<BusinessInformationScreen> {
     String? orNull(String t) => t.trim().isEmpty ? null : t.trim();
 
     return {
+      // Personal
       'fullName': _fullName.text.trim(),
       'email': _email.text.trim(),
-      'phone': _phone.text.trim(),
-      'documentType': _documentType.text.trim(),
-      'documentNumber': _documentNumber.text.trim(),
-      'vendorAddress': orNull(_vendorAddress.text),
-      'hospitalAddress': orNull(_hospitalAddress.text),
-      'bankName': _bankName.text.trim(),
-      'accountNumber': _accountNumber.text.trim(),
-      'ifscCode': _ifsc.text.trim(),
+      'phone': _phone.text.trim(), // 10 digits normalized
+      'phoneNumber': _phone.text.trim(),
+      // Address
+      'streetAddress': _streetAddress.text.trim(),
+      'city': _city.text.trim(),
+      'state': _state.text.trim(),
+      'pinCode': _pin.text.trim(),
+      'country': _country.text.trim(),
+      // Business
+      'businessType': _businessType.text.trim(),
+      'yearsOfExperience': _yearsExp.text.trim(),
       'businessName': _businessName.text.trim(),
       'gstNumber': orNull(_gstNumber.text),
+      // Identity
+      'documentType': _documentType.text.trim(),
+      'idType': _idType.text.trim(),
+      'documentNumber': _documentNumber.text.trim(),
+      // Vendor + hospital addresses
+      'vendorAddress': orNull(_vendorAddress.text),
+      'hospitalAddress': orNull(_hospitalAddress.text),
+      // Banking
+      'bankName': _bankName.text.trim(),
+      'accountNumber': _accountNumber.text.trim(),
+      'ifscCode': _ifsc.text.trim().toUpperCase(),
+      'accountHolderName': _fullName.text.trim(),
+      // Optional business registry fields
       'licenseNumber': orNull(_licenseNumber.text),
       'registrationDate': regDate?.toIso8601String(),
+      // Files (multipart picks up actual files; for JSON we keep as paths for reference)
       'adharCard': _fileAadhar?.path,
       'panCard': _filePan?.path,
       'gstCertificate': _fileGst?.path,

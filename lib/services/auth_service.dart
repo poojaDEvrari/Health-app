@@ -160,7 +160,13 @@ class AuthService {
       if (profileCompleted is bool) return !profileCompleted;
     }
 
-    // Default to existing vendor if unknown
+    // If role is vendor and we cannot find any explicit KYC/profile flags,
+    // treat as NEW to force BusinessInformationScreen first.
+    final role = _extractRole(data)?.toUpperCase();
+    if (role == 'VENDOR') {
+      return true;
+    }
+    // Default to existing vendor otherwise
     return false;
   }
 
