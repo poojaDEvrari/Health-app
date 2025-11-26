@@ -8,6 +8,9 @@ import 'package:relax_doc/services/product_service.dart';
 import 'package:relax_doc/models/product.dart';
 import 'package:relax_doc/services/auth_guard.dart';
 import 'package:relax_doc/screens/product_detail_screen.dart';
+import 'package:relax_doc/models/cart_item.dart';
+import 'package:relax_doc/services/cart_service.dart';
+import 'package:relax_doc/services/location_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -233,6 +236,27 @@ class _SmallProductCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () async {
+                  final ok = await AuthGuard.ensureLoggedIn(context);
+                  if (!ok) return;
+                  await CartService.addOrIncrement(CartItem(
+                    productId: product.id,
+                    title: product.title,
+                    imageUrl: product.imagesUrl.isNotEmpty ? product.imagesUrl.first : '',
+                    price: product.discountedPrice,
+                    mrp: product.originalPrice,
+                    quantity: 1,
+                  ));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to cart')));
+                },
+                style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 6)),
+                child: const Text('ADD', style: TextStyle(fontSize: 12)),
+              ),
+            ),
           ],
         ),
       ),
@@ -339,8 +363,8 @@ class _PartnerBadge extends StatelessWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> _cities = const ['Mumbai', 'Pune', 'Delhi', 'Bengaluru'];
-  String _selectedCity = 'pune';
+  final List<String> _cities = const ['Use current location', 'Mumbai', 'Pune', 'Delhi', 'Bengaluru'];
+  String _selectedCity = '';
   
   // State variables for API data
   List<Product> _newEquipment = [];
@@ -390,7 +414,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _initLocation();
     _fetchData();
+  }
+
+  Future<void> _initLocation() async {
+    final saved = await LocationService.loadSaved();
+    if (!mounted) return;
+    if (saved != null && saved.isNotEmpty) {
+      setState(() => _selectedCity = saved);
+    } else {
+      final city = await LocationService.fetchCurrentCity();
+      if (!mounted) return;
+      if (city != null && city.isNotEmpty) setState(() => _selectedCity = city);
+    }
   }
 
   Future<void> _fetchData() async {
@@ -517,16 +554,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Icon(Icons.location_on_outlined, color: AppColors.primary),
                                 const SizedBox(width: 6),
                                 DropdownButton<String>(
-                                  value: _cities.contains(_selectedCity) ? _selectedCity : null,
+                                  value: _selectedCity.isEmpty ? null : _selectedCity,
                                   underline: const SizedBox.shrink(),
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18),
-                                  items: _cities
-                                      .map((c) => DropdownMenuItem<String>(
-                                          value: c, child: Text(c)))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedCity = v ?? _selectedCity),
+                                  style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18),
+                                  hint: Text('Select location', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                                  items: _cities.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
+                                  onChanged: (v) async {
+                                    if (v == null) return;
+                                    if (v == 'Use current location') {
+                                      final city = await LocationService.fetchCurrentCity();
+                                      if (!mounted) return;
+                                      if (city != null && city.isNotEmpty) {
+                                        setState(() => _selectedCity = city);
+                                      }
+                                    } else {
+                                      await LocationService.save(v);
+                                      if (!mounted) return;
+                                      setState(() => _selectedCity = v);
+                                    }
+                                  },
                                 ),
                                 const Spacer(),
                                 IconButton(
@@ -578,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 12),
                           SizedBox(
-                            height: 120,
+                            height: 130,
                             child: ListView(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -870,7 +916,7 @@ class _EquipmentCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 160,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -891,24 +937,24 @@ class _EquipmentCard extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 24),
+              child: Icon(icon, color: AppColors.primary, size: 22),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               title,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               '$count items',
               style: TextStyle(
                 color: Colors.grey[600],
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ],

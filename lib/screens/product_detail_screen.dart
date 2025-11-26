@@ -5,6 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:relax_doc/models/product.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/services/auth_guard.dart';
+import 'package:relax_doc/models/cart_item.dart';
+import 'package:relax_doc/services/cart_service.dart';
+import 'package:relax_doc/screens/cart_screen.dart';
+import 'package:relax_doc/widgets/cart_icon_button.dart';
 
 
 
@@ -78,6 +82,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               icon: const Icon(Icons.favorite_border, color: Colors.black54),
               onPressed: () {
                 // Favorite functionality
+              },
+            ),
+            CartIconButton(
+              onPressed: () async {
+                final ok = await AuthGuard.ensureLoggedIn(context);
+                if (!ok) return;
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
               },
             ),
           ],
@@ -252,7 +263,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Row(children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () {},
+                                onPressed: () async {
+                                  final ok = await AuthGuard.ensureLoggedIn(context);
+                                  if (!ok) return;
+                                  await CartService.addOrIncrement(CartItem(
+                                    productId: widget.product.id,
+                                    title: widget.product.title,
+                                    imageUrl: widget.product.imagesUrl.isNotEmpty ? widget.product.imagesUrl.first : '',
+                                    price: widget.product.discountedPrice,
+                                    mrp: widget.product.originalPrice,
+                                    quantity: 1,
+                                  ));
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to cart')));
+                                },
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(color: AppColors.primary),
                                   foregroundColor: AppColors.primary,
@@ -265,7 +289,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () async {
+                                  final ok = await AuthGuard.ensureLoggedIn(context);
+                                  if (!ok) return;
+                                  await CartService.addOrIncrement(CartItem(
+                                    productId: widget.product.id,
+                                    title: widget.product.title,
+                                    imageUrl: widget.product.imagesUrl.isNotEmpty ? widget.product.imagesUrl.first : '',
+                                    price: widget.product.discountedPrice,
+                                    mrp: widget.product.originalPrice,
+                                    quantity: 1,
+                                  ));
+                                  if (!mounted) return;
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const CartScreen()),
+                                  );
+                                },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -449,8 +488,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added')));
+            onPressed: () async {
+              final ok = await AuthGuard.ensureLoggedIn(context);
+              if (!ok) return;
+              await CartService.addOrIncrement(CartItem(
+                productId: widget.product.id,
+                title: widget.product.title,
+                imageUrl: widget.product.imagesUrl.isNotEmpty ? widget.product.imagesUrl.first : '',
+                price: widget.product.discountedPrice,
+                mrp: widget.product.originalPrice,
+                quantity: 1,
+              ));
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to cart')));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,

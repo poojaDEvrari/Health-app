@@ -5,6 +5,10 @@ import 'package:relax_doc/services/product_service.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/services/auth_guard.dart';
 import 'package:relax_doc/screens/product_detail_screen.dart';
+import 'package:relax_doc/models/cart_item.dart';
+import 'package:relax_doc/services/cart_service.dart';
+import 'package:relax_doc/screens/cart_screen.dart';
+import 'package:relax_doc/widgets/cart_icon_button.dart';
 
 class CategoryProductsScreen extends StatefulWidget {
   final String categoryTitle;
@@ -33,11 +37,17 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(selectedCategory, style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        actions: const [
-          Icon(Icons.search_outlined),
-          SizedBox(width: 8),
-          Icon(Icons.shopping_bag_outlined),
-          SizedBox(width: 12),
+        actions: [
+          const Icon(Icons.search_outlined),
+          const SizedBox(width: 8),
+          CartIconButton(
+            onPressed: () async {
+              final ok = await AuthGuard.ensureLoggedIn(context);
+              if (!ok) return;
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
+            },
+          ),
+          const SizedBox(width: 12),
         ],
         surfaceTintColor: Colors.transparent,
         backgroundColor: Colors.white,
@@ -221,8 +231,16 @@ class _ProductRow extends StatelessWidget {
                       onPressed: () async {
                         final ok = await AuthGuard.ensureLoggedIn(context);
                         if (!ok) return;
+                        await CartService.addOrIncrement(CartItem(
+                          productId: product.id,
+                          title: product.title,
+                          imageUrl: product.imagesUrl.isNotEmpty ? product.imagesUrl.first : '',
+                          price: product.discountedPrice,
+                          mrp: product.originalPrice,
+                          quantity: 1,
+                        ));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to cart (to be implemented)')),
+                          const SnackBar(content: Text('Added to cart')),
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -237,9 +255,15 @@ class _ProductRow extends StatelessWidget {
                       onPressed: () async {
                         final ok = await AuthGuard.ensureLoggedIn(context);
                         if (!ok) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Proceed to buy (to be implemented)')),
-                        );
+                        await CartService.addOrIncrement(CartItem(
+                          productId: product.id,
+                          title: product.title,
+                          imageUrl: product.imagesUrl.isNotEmpty ? product.imagesUrl.first : '',
+                          price: product.discountedPrice,
+                          mrp: product.originalPrice,
+                          quantity: 1,
+                        ));
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen()));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

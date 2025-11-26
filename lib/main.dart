@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:relax_doc/theme/app_theme.dart';
 import 'package:relax_doc/screens/splash_screen.dart';
+import 'package:relax_doc/services/cart_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await CartService.refreshCount();
   runApp(const RelaxDocApp());
 }
 
