@@ -363,7 +363,7 @@ class _PartnerBadge extends StatelessWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<String> _cities = const ['Use current location', 'Mumbai', 'Pune', 'Delhi', 'Bengaluru'];
+  List<String> _cities = ['Use current location', 'Mumbai', 'Pune', 'Delhi', 'Bengaluru'];
   String _selectedCity = '';
   
   // State variables for API data
@@ -422,11 +422,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final saved = await LocationService.loadSaved();
     if (!mounted) return;
     if (saved != null && saved.isNotEmpty) {
-      setState(() => _selectedCity = saved);
+      setState(() {
+        if (!_cities.contains(saved)) _cities.insert(1, saved);
+        _selectedCity = saved;
+      });
     } else {
       final city = await LocationService.fetchCurrentCity();
       if (!mounted) return;
-      if (city != null && city.isNotEmpty) setState(() => _selectedCity = city);
+      if (city != null && city.isNotEmpty) {
+        setState(() {
+          if (!_cities.contains(city)) _cities.insert(1, city);
+          _selectedCity = city;
+        });
+      }
     }
   }
 
@@ -554,7 +562,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Icon(Icons.location_on_outlined, color: AppColors.primary),
                                 const SizedBox(width: 6),
                                 DropdownButton<String>(
-                                  value: _selectedCity.isEmpty ? null : _selectedCity,
+                                  value: _selectedCity.isEmpty || !_cities.contains(_selectedCity) ? null : _selectedCity,
                                   underline: const SizedBox.shrink(),
                                   style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.w600, fontSize: 18),
                                   hint: Text('Select location', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
